@@ -7,10 +7,10 @@ import javax.ws.rs.QueryParam;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -47,10 +47,10 @@ public class MovieResource {
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.TEXT_PLAIN)
     public Response updateMovie(
-            @PathParam("{movieToUpdate}")String movieToUpdate,
-            @QueryParam("movie") String updateMovie){
+            @PathParam("movieToUpdate") String movieToUpdate,
+            @QueryParam("movie") String updateMovie) {
         movies = movies.stream().map(movie -> {
-            if(movie.equals(movieToUpdate)){
+            if(movie.equals(movieToUpdate)) {
                 return updateMovie;
             }
             return movie;
@@ -58,8 +58,14 @@ public class MovieResource {
         return Response.ok(movies).build();
     }
 
-
-
-
+    @DELETE
+    @Path("{movieToDelete}")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public Response deleteMovie(
+            @PathParam("movieToDelete") String movieToDelete) {
+        boolean removed = movies.remove(movieToDelete); //檢查是否刪除成功
+        return removed ? Response.noContent().build() : //成功則發送沒有內容的Response
+                Response.status(Response.Status.BAD_REQUEST).build(); //失敗發送帶有狀態的code-BAD REQUEST    
+    }
     
 }
