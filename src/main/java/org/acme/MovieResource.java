@@ -7,6 +7,7 @@ import javax.ws.rs.QueryParam;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.Consumes;
@@ -19,10 +20,10 @@ import javax.ws.rs.core.Response;
 
 @Path("/movies")
 public class MovieResource {
-    public static List<String> movies = new ArrayList<>();
+    public static List<Movie> movies = new ArrayList<>(); //變成物件
 
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getMovies(){
         return Response.ok(movies).build();
     }
@@ -35,23 +36,23 @@ public class MovieResource {
     }
 
     @POST
-    @Produces(MediaType.TEXT_PLAIN)
-    @Consumes(MediaType.TEXT_PLAIN)
-    public Response createMovie(String newMovie){
+    @Produces(MediaType.APPLICATION_JSON) // 轉物件 TEXT_PLAIN ->APPLICATION_JSON
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response createMovie(Movie newMovie){
         movies.add(newMovie);
         return Response.ok(movies).build();
     }
 
     @PUT
-    @Path("{movieToUpdate}")
-    @Produces(MediaType.TEXT_PLAIN)
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Path("{id}/{title}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response updateMovie(
-            @PathParam("movieToUpdate") String movieToUpdate,
-            @QueryParam("movie") String updateMovie) {
+            @PathParam("id") Long id,
+            @PathParam("title") String title) {
         movies = movies.stream().map(movie -> {
-            if(movie.equals(movieToUpdate)) {
-                return updateMovie;
+            if(movie.getId().equals(id)) {
+                movie.setTitle(title);
             }
             return movie;
         }).collect(Collectors.toList());
@@ -59,13 +60,22 @@ public class MovieResource {
     }
 
     @DELETE
-    @Path("{movieToDelete}")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Path("{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
     public Response deleteMovie(
-            @PathParam("movieToDelete") String movieToDelete) {
-        boolean removed = movies.remove(movieToDelete); //檢查是否刪除成功
-        return removed ? Response.noContent().build() : //成功則發送沒有內容的Response
-                Response.status(Response.Status.BAD_REQUEST).build(); //失敗發送帶有狀態的code-BAD REQUEST    
+            @PathParam("id") Long id) {
+       
+        Optional<Movie> movieToDelete = movies.stream().filter(movie -> movie.getId().equals(id))
+        .findFirst();
+        boolean removed = false;
+        if(movieToDelete.isPresent()) {
+            removed = movies.remove(movieToDelete.get());
+        }
+        if(removed) {
+            return Response.noContent().build();
+        }
+        
+        return Response.status(Response.Status.BAD_REQUEST).build(); //失敗發送帶有狀態的code-BAD REQUEST    
     }
     
 }
